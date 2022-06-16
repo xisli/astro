@@ -77,7 +77,16 @@ export default function envVitePlugin({
 			if (typeof privateEnv === 'undefined') {
 				privateEnv = getPrivateEnv(config, astroConfig);
 				if (privateEnv) {
+					// Built-in env variables
+					// See https://vitejs.dev/guide/env-and-mode.html#env-variables
+					privateEnv.MODE = `'${config.mode}'`;
+					privateEnv.PROD = config.mode === 'production' ? 'true' : 'false';
+					privateEnv.DEV = config.mode !== 'production' ? 'true' : 'false';
+					privateEnv.BASE_URL = astroConfig.base ? `'${astroConfig.base}'` : 'undefined';
+
+					// Astro built-in env variables
 					privateEnv.SITE = astroConfig.site ? `'${astroConfig.site}'` : 'undefined';
+
 					const entries = Object.entries(privateEnv).map(([key, value]) => [
 						`import.meta.env.${key}`,
 						value,
@@ -85,7 +94,6 @@ export default function envVitePlugin({
 					replacements = Object.fromEntries(entries);
 					// These additional replacements are needed to match Vite
 					replacements = Object.assign(replacements, {
-						'import.meta.env.SITE': astroConfig.site ? `'${astroConfig.site}'` : 'undefined',
 						// This catches destructed `import.meta.env` calls,
 						// BUT we only want to inject private keys referenced in the file.
 						// We overwrite this value on a per-file basis.
